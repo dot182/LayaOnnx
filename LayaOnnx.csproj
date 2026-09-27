@@ -1,0 +1,23 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <OutputType>Exe</OutputType>
+    <TargetFramework>net8.0</TargetFramework>
+    <ImplicitUsings>enable</ImplicitUsings>
+    <Nullable>enable</Nullable>
+    <RootNamespace>LayaOnnx</RootNamespace>
+  </PropertyGroup>
+
+  <PropertyGroup>
+    <PackageId>LayaOnnx</PackageId>
+    <Description>Run Laya with ONNX runtime.</Description>
+    <PackageTags>Laya, ONNX, AI</PackageTags>
+    <PackageReadmeFile>README.md</PackageReadmeFile>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <PackageReference Include="Microsoft.ML.OnnxRuntime" Version="1.20.1" />
+    <PackageReference Include="Microsoft.ML.Tokenizers" Version="1.0.2" />
+  </ItemGroup>
+
+</Project>

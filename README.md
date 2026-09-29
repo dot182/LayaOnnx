@@ -29,6 +29,13 @@ Console.WriteLine($"{intent.BestOption} ({intent.Confidence:P1})");
    - Outputs: `logits` (`float32 [1, k]`) — this wrapper only reads that one output.
 2. **That checkpoint's `tokenizer.json`.**
 
+## Installation
+
+Available on [Nuget](https://www.nuget.org/packages/LayaOnnx)
+```shell
+dotnet add package LayaOnnx
+```
+
 ## Tokenizer notes
 
 `Microsoft.ML.Tokenizers`' `BpeTokenizer` normally loads a separate `vocab.json` + `merges.txt`. Laya ships a

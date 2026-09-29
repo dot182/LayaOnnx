@@ -2,8 +2,7 @@
 
   <PropertyGroup>
     <OutputType>Library</OutputType>
-    <TargetFramework>net8.0</TargetFramework>
-    <ImplicitUsings>enable</ImplicitUsings>
+    <TargetFramework>netstandard2.1</TargetFramework>
     <Nullable>enable</Nullable>
     <RootNamespace>LayaOnnx</RootNamespace>
   </PropertyGroup>
@@ -13,8 +12,7 @@
     <Description>Run Laya with ONNX runtime.</Description>
     <PackageTags>Laya, ONNX, AI</PackageTags>
     <PackageReadmeFile>README.md</PackageReadmeFile>
-
-    <Version>1.0.0</Version>
+    <Version>1.0.1</Version>
     <Authors>dot182</Authors>
     <RepositoryUrl>https://github.com/dot182/LayaOnnx</RepositoryUrl>
     <PackageLicenseExpression>MIT</PackageLicenseExpression>

@@ -78,3 +78,7 @@ using var laya = new LayaModel("laya.onnx", "tokenizer.json",
   512) and 48-tokens-per-option truncation are, matching Laya's own reference ONNX example. Raise an option
   count that overflows this at your own risk — pass a smaller `maxLen`/`optionMaxTokens` if you hit issues.
 - Package versions in the `.csproj` are placeholders — bump them to whatever's current when you restore.
+
+## License
+This project is licensed under the MIT License.
+The [Laya](https://github.com/NandhaKishorM/laya) model is licensed under Apache 2.0.

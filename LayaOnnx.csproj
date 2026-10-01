@@ -12,7 +12,7 @@
     <Description>Run Laya with ONNX runtime.</Description>
     <PackageTags>Laya, ONNX, AI</PackageTags>
     <PackageReadmeFile>README.md</PackageReadmeFile>
-    <Version>1.0.1</Version>
+    <Version>1.0.2</Version>
     <Authors>dot182</Authors>
     <RepositoryUrl>https://github.com/dot182/LayaOnnx</RepositoryUrl>
     <PackageLicenseExpression>MIT</PackageLicenseExpression>

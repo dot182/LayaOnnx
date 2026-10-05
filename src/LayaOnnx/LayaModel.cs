@@ -23,10 +23,34 @@ namespace LayaOnnx
         YesNo = 2,
     }
 
+    /// <summary>One option Laya can pick: a short <paramref name="Key"/> used as the answer identifier (e.g.
+    /// "reship") plus the human-readable <paramref name="Description"/> shown to the model (e.g. "Send a
+    /// replacement"). For plain string options the two are just the same value.</summary>
+    public readonly struct LayaOption
+    {
+        public readonly string Key;
+        public readonly string Description;
+
+        public LayaOption(string key, string description)
+        {
+            Key = key;
+            Description = description;
+        }
+
+        public LayaOption(string keyAndDescription)
+        {
+            Key = keyAndDescription;
+            Description = keyAndDescription;
+        }
+    }
     /// <summary>One typed answer from Laya: a probability per option, plus the model's pick.</summary>
     public sealed class LayaAnswer
     {
+        /// <summary>The option keys, in the same order as <see cref="Probabilities"/> (e.g. "reship", "notify").</summary>
         public string[] Options;
+
+        /// <summary>The option descriptions shown to the model, same order as <see cref="Options"/>.</summary>
+        public string[] Descriptions;
 
         /// <summary>Calibrated probability per option, same order as <see cref="Options"/>. Sums to 1.</summary>
         public double[] Probabilities;
@@ -41,6 +65,7 @@ namespace LayaOnnx
         /// <summary>For Score questions: the ordinal expectation Σ i·p(i) over the option indices.
         /// For YesNo questions, <see cref="Probabilities"/>[1] is P(true) directly. Ignore this for Choice.</summary>
         public double ExpectedScore;
+
         public override string ToString() => $"{BestOption} ({Confidence:P1})";
     }
 
@@ -105,21 +130,46 @@ namespace LayaOnnx
             _maskId = ResolveSpecialToken(loaded.TokenToId, maskToken, "[MASK]", "<mask>");
         }
 
-        /// <summary>Pick the best of several labelled options for the given state.</summary>
+        /// <summary>Pick the best of several plain-string options (key and description are the same).</summary>
         public LayaAnswer AskChoice(string state, string instructions, IReadOnlyList<string> options)
-            => Ask(LayaQuestionType.Choice, state, instructions, options);
+            => Ask(LayaQuestionType.Choice, state, instructions, ToOptions(options));
 
-        /// <summary>Score the state against an ordered list of options (e.g. a 1-5 severity scale).</summary>
+        /// <summary>Pick the best of several labelled options, given as a criteria dictionary (key -> description),
+        /// e.g. <c>{ "reship": "Send a replacement", "notify": "Notify the customer of the delay" }</c>. The answer's
+        /// <see cref="LayaAnswer.Options"/> will contain the keys ("reship"), not the descriptions.</summary>
+        public LayaAnswer AskChoice(string state, string instructions, IReadOnlyDictionary<string, string> criteria)
+            => Ask(LayaQuestionType.Choice, state, instructions, ToOptions(criteria));
+
+        /// <summary>Score the state against an ordered list of plain-string options (e.g. a 1-5 severity scale).
+        /// List/array order is always preserved, so this is safe as-is.</summary>
         public LayaAnswer AskScore(string state, string instructions, IReadOnlyList<string> options)
-            => Ask(LayaQuestionType.Score, state, instructions, options);
+            => Ask(LayaQuestionType.Score, state, instructions, ToOptions(options));
+
+        /// <summary>Score the state against an ordered criteria list (key -> description) - the order defines the
+        /// scale, so this takes a list of pairs rather than a <c>Dictionary</c>/<c>IReadOnlyDictionary</c>, whose
+        /// enumeration order isn't part of their contract. E.g.
+        /// <c>new List&lt;KeyValuePair&lt;string,string&gt;&gt; { new("low", "..."), new("high", "...") }</c>.</summary>
+        public LayaAnswer AskScore(string state, string instructions, IReadOnlyList<KeyValuePair<string, string>> criteria)
+            => Ask(LayaQuestionType.Score, state, instructions, ToOptions(criteria));
 
         /// <summary>Ask whether a proposition holds for the state. Returns Probabilities[1] as P(true).</summary>
         public LayaAnswer AskYesNo(string state, string instructions, string noLabel = "no", string yesLabel = "yes")
-            => Ask(LayaQuestionType.YesNo, state, instructions, new[] { noLabel, yesLabel });
+            => Ask(LayaQuestionType.YesNo, state, instructions, new List<LayaOption> { new LayaOption(noLabel), new LayaOption(yesLabel) });
+
+        private static List<LayaOption> ToOptions(IReadOnlyList<string> options)
+            => options.Select(o => new LayaOption(o, o)).ToList();
+
+        private static List<LayaOption> ToOptions(IReadOnlyDictionary<string, string> criteria)
+            => criteria.Select(kvp => new LayaOption(kvp.Key, kvp.Value)).ToList();
+
+        // Same conversion, but IReadOnlyList<KeyValuePair<...>> is what actually guarantees enumeration happens in
+        // list order - a plain Dictionary/IReadOnlyDictionary doesn't promise that as part of its contract.
+        private static List<LayaOption> ToOptions(IReadOnlyList<KeyValuePair<string, string>> criteria)
+            => criteria.Select(kvp => new LayaOption(kvp.Key, kvp.Value)).ToList();
 
         /// <summary>The general entry point behind AskChoice/AskScore/AskYesNo, in case you want to pick the
         /// question type and option labels yourself.</summary>
-        public LayaAnswer Ask(LayaQuestionType questionType, string state, string instructions, IReadOnlyList<string> options)
+        public LayaAnswer Ask(LayaQuestionType questionType, string state, string instructions, IReadOnlyList<LayaOption> options)
         {
             if (options.Count == 0)
             {
@@ -145,7 +195,7 @@ namespace LayaOnnx
             {
                 markerPositions.Add(seq.Count); // position of the [MASK] we're about to add
                 seq.Add(_maskId);
-                var optionIds = _tokenizer.EncodeToIds(" " + option);
+                var optionIds = _tokenizer.EncodeToIds(" " + option.Description);
                 seq.AddRange(optionIds.Take(_optionMaxTokens).Select(id => (long)id));
             }
             seq.Add(_eosId);
@@ -200,7 +250,8 @@ namespace LayaOnnx
 
             return new LayaAnswer
             {
-                Options = options.ToArray(),
+                Options = options.Select(o => o.Key).ToArray(),
+                Descriptions = options.Select(o => o.Description).ToArray(),
                 Probabilities = probabilities,
                 BestIndex = bestIndex,
                 ExpectedScore = expectedScore,
@@ -241,4 +292,5 @@ namespace LayaOnnx
 
         public void Dispose() => _session.Dispose();
     }
+
 }
